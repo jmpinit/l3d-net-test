@@ -26,11 +26,11 @@ $(TEST_BINS): $(BUILD_DIR)%.bin : $(TEST_DIR)%.cpp $(SOURCES) | $(BUILD_DIR)
 	-rm -r $(FIRMWARE_DIR)libraries/$(LIB_NAME)
 	mkdir -p $(FIRMWARE_DIR)libraries/$(LIB_NAME)
 	cp -r $(SRC_DIR) $(FIRMWARE_DIR)libraries/$(LIB_NAME)/$(LIB_NAME)
-	cd $(FIRMWARE_DIR)build && $(MAKE) APP=$(TEST_NAME)
+	cd $(FIRMWARE_DIR)build && '$(MAKE)' APP=$(TEST_NAME)
 	cp $(FIRMWARE_DIR)build/applications/$(TEST_NAME)/$(TEST_NAME).bin $@
 
 $(BUILD_DIR):
-	mkdir $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 
 doc:
 	doxygen Doxyfile
