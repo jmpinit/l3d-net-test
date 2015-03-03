@@ -2,6 +2,7 @@
 #include <math.h>
 
 TCPServer server = TCPServer(23);
+TCPClient client;
 
 Cube cube = Cube();
 
@@ -17,9 +18,6 @@ void setup()
   while(!Serial.available()) SPARK_WLAN_Loop();
 
   Serial.println(WiFi.localIP());
-  Serial.println(WiFi.subnetMask());
-  Serial.println(WiFi.gatewayIP());
-  Serial.println(WiFi.SSID());
 }
 
 void loop()
