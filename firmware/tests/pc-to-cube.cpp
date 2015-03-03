@@ -13,15 +13,22 @@ void setup()
   cube.begin();
   cube.background(black);
 
-  Serial.begin(9600);
-
-  while(!Serial.available()) SPARK_WLAN_Loop();
-
-  Serial.println(WiFi.localIP());
+  Serial.begin(115200);
 }
 
 void loop()
 {
+  // reset on serial data
+  while (Serial.available() > 0) {
+    Serial.read(); // empty buffer
+
+    Serial.println(WiFi.localIP());
+
+    if (client.connected())
+      client.stop();
+  }
+
+  // handle network events
   if (client.connected()) {
     // echo all available bytes back to the client
     while (client.available()) {
