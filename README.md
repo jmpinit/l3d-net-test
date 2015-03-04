@@ -3,7 +3,13 @@ L3D Cube Network Tests
 
 Tests of network connection quality under various circumstances for streaming to the [L3D Cube](http://l3dcube.com/).
 
-# Building Locally
+## Example Usage
+
+1. `make bin/pc-to-cube.bin` to build test firmware.
+2. `spark flash --usb bin/pc-to-cube.bin` to flash firmware to the Spark Core connected via USB using the [Spark CLI utility](https://github.com/spark/spark-cli).
+3. `python pc/pc-to-cube.py 1000 512` to run the test.
+
+## Building Locally
 
 To compile a firmware binary using a local copy of the library:
 
