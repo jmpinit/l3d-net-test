@@ -1,6 +1,8 @@
 #include "l3d-cube/l3d-cube.h"
 #include <math.h>
 
+#define PACKET_SIZE 512
+
 TCPServer server = TCPServer(23);
 TCPClient client;
 
@@ -18,6 +20,8 @@ void setup()
 
 void loop()
 {
+  static int byteCount = 0;
+
   // reset on serial data
   while (Serial.available() > 0) {
     Serial.read(); // empty buffer
@@ -26,13 +30,19 @@ void loop()
 
     if (client.connected())
       client.stop();
+
+    byteCount = 0;
   }
 
   // handle network events
   if (client.connected()) {
-    // echo all available bytes back to the client
-    while (client.available()) {
-      server.write(client.read());
+    while (client.available() > 0) {
+      client.read();
+      byteCount++;
+
+      if (byteCount % PACKET_SIZE == 0) {
+        server.write('y');
+      }
     }
   } else {
     // if no client is yet connected, check for a new connection
