@@ -54,8 +54,11 @@ int main(int argc, char *argv[]) {
     // get the IP & set packet size
 
     char* address = cubeInfo("/dev/ttyACM0", packetSize);
+
+#ifndef FMT_CSV
     printf("Cube IP is %s.\n", address);
     fflush(stdout);
+#endif
 
     // setup connection 
 
@@ -64,7 +67,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Could not create socket.\n");
         exit(1);
     } else {
+#ifndef FMT_CSV
         printf("Socket created.\n");
+#endif
     }
 
     struct sockaddr_in server;
@@ -77,13 +82,17 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+#ifndef FMT_CSV
     printf("Connected to server.\n");
     fflush(stdout);
+#endif
 
     // do test
 
+#ifndef FMT_CSV
     printf("Sending %d packets. Packet size is %d bytes.\n", packetCount, packetSize);
     fflush(stdout);
+#endif
 
     char packet[packetSize];
     char reply[1];
@@ -113,8 +122,13 @@ int main(int argc, char *argv[]) {
     }
 
     float averageMillis = average(time, packetCount) / 1000.f;
+#ifdef FMT_CSV
+    printf("%d, %f, %d\n", packetSize, averageMillis, packetCount);
+    fflush(stdout);
+#else
     printf("Test completed.\nOn average, %f milliseconds per packet.\n", averageMillis);
     fflush(stdout);
+#endif
 
     close(sock);
 
@@ -137,7 +151,7 @@ float average(long* arr, int len) {
 char* cubeInfo(char* port, unsigned int packetSize) {
     int fd = open(port, O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
-        fprintf(stderr, "error %d opening %s: %s", errno, port, strerror(errno));
+        fprintf(stderr, "error %d opening %s: %s\n", errno, port, strerror(errno));
         exit(1);
     }
 
