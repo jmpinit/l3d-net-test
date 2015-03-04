@@ -19,6 +19,10 @@
 // cube
 char* cubeInfo(char* port, unsigned int packetSize);
 
+// timing
+double elapsedMicroseconds(struct timeval x, struct timeval y);
+float average(long* arr, int len);
+
 // serial
 int set_interface_attribs(int fd, int speed, int parity);
 void set_blocking(int fd, int should_block);
@@ -48,16 +52,19 @@ int main(int argc, char *argv[]) {
     }
 
     // get the IP & set packet size
+
     char* address = cubeInfo("/dev/ttyACM0", packetSize);
     printf("Cube IP is %s.\n", address);
+    fflush(stdout);
 
-    // network test
+    // setup connection 
+
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        perror("Could not create socket.");
+        fprintf(stderr, "Could not create socket.\n");
         exit(1);
     } else {
-        printf("Socket created.");
+        printf("Socket created.\n");
     }
 
     struct sockaddr_in server;
@@ -71,25 +78,58 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Connected to server.\n");
+    fflush(stdout);
 
-    char packet[512];
-    if (send(sock, packet, sizeof(packet), 0) < 0) {
-        fprintf(stderr, "Send failed.\n");
-        exit(1);
-    } else {
-        printf("Sent packet.\n");
-    }
+    // do test
 
+    printf("Sending %d packets. Packet size is %d bytes.\n", packetCount, packetSize);
+    fflush(stdout);
+
+    char packet[packetSize];
     char reply[1];
-    if (recv(sock, reply, 1, 0) < 0) {
-        fprintf(stderr, "Recv failed.\n");
-    } else {
-        printf("Got reply: %c.\n", reply[0]);
+
+    long time[packetCount];
+    struct timeval timeStart, timeEnd;
+
+    int packetIndex;
+    for(packetIndex = 0; packetIndex < packetCount; packetIndex++) {
+        gettimeofday(&timeStart, NULL);
+
+        if (send(sock, packet, sizeof(packet), 0) < 0) {
+            fprintf(stderr, "Send failed on packet #%d.\n", packetIndex);
+            exit(1);
+        }
+
+        if (recv(sock, reply, 1, 0) < 0) {
+            fprintf(stderr, "Recv failed on packet #%d.\n", packetIndex);
+        }
+
+        if (reply[0] != 'y') {
+            fprintf(stderr, "Weird reply on packet #%d: %c (%x).\n", reply[0], reply[0]);
+        } else {
+            gettimeofday(&timeEnd, NULL);
+            time[packetIndex] = elapsedMicroseconds(timeStart, timeEnd);
+        }
     }
+
+    float averageMillis = average(time, packetCount) / 1000.f;
+    printf("Test completed.\nOn average, %f milliseconds per packet.\n", averageMillis);
+    fflush(stdout);
 
     close(sock);
 
     return 0;
+}
+
+// get average of array of longs
+float average(long* arr, int len) {
+    long total = 0;
+
+    int i;
+    for(i = 0; i < len; i++)
+        total += arr[i];
+
+    return (float)total / len;
 }
 
 // set packet size over serial
@@ -191,3 +231,14 @@ void set_blocking(int fd, int should_block) {
         fprintf(stderr, "error %d setting term attributes", errno);
 }
 
+// get time difference in microseconds
+double elapsedMicroseconds(struct timeval x, struct timeval y) {
+    double x_ms, y_ms, diff;
+
+    x_ms = (double)x.tv_sec * 1000000 + (double)x.tv_usec;
+    y_ms = (double)y.tv_sec * 1000000 + (double)y.tv_usec;
+
+    diff = (double)y_ms - (double)x_ms;
+
+    return diff;
+}
