@@ -24,7 +24,7 @@ else:
 while True:
     # get the IP of the cube over serial
     port = serial.Serial(serialPort, 115200, timeout=0.1)
-    port.write("x") # request IP by sending any character
+    port.write(str(packetSize) + "\n")
     IP = port.readline().strip()
     port.close()
 

@@ -1,7 +1,8 @@
 #include "l3d-cube/l3d-cube.h"
 #include <math.h>
 
-#define PACKET_SIZE 512
+#define MAX_PACKET_SIZE 4096
+int packetSize = 512;
 
 TCPServer server = TCPServer(23);
 TCPClient client;
@@ -21,17 +22,29 @@ void setup()
 void loop()
 {
   static int byteCount = 0;
+  static String cmdBuffer = "";
 
-  // reset on serial data
   while (Serial.available() > 0) {
-    Serial.read(); // empty buffer
+    char c = Serial.read();
 
-    Serial.println(WiFi.localIP());
+    if (c == '\n' || c == '\r') {
+        long maybeSize = cmdBuffer.toInt();
 
-    if (client.connected())
-      client.stop();
+        if (maybeSize > 0 && maybeSize <= MAX_PACKET_SIZE) {
+          packetSize = maybeSize;
 
-    byteCount = 0;
+          Serial.println(WiFi.localIP());
+
+          if (client.connected())
+            client.stop();
+
+          byteCount = 0;
+        }
+
+        cmdBuffer = "";
+    } else {
+        cmdBuffer += c;
+    }
   }
 
   // handle network events
@@ -40,7 +53,7 @@ void loop()
       client.read();
       byteCount++;
 
-      if (byteCount % PACKET_SIZE == 0) {
+      if (byteCount % packetSize == 0) {
         server.write('y');
       }
     }
