@@ -47,7 +47,48 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    printf("Cube IP is %s.\n", cubeInfo("/dev/ttyACM0", packetSize));
+    // get the IP & set packet size
+    char* address = cubeInfo("/dev/ttyACM0", packetSize);
+    printf("Cube IP is %s.\n", address);
+
+    // network test
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        perror("Could not create socket.");
+        exit(1);
+    } else {
+        printf("Socket created.");
+    }
+
+    struct sockaddr_in server;
+    server.sin_addr.s_addr = inet_addr(address);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(23); // cube listens on telnet port
+
+    if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
+        fprintf(stderr, "Connect failed.\n");
+        exit(1);
+    }
+
+    printf("Connected to server.\n");
+
+    char packet[512];
+    if (send(sock, packet, sizeof(packet), 0) < 0) {
+        fprintf(stderr, "Send failed.\n");
+        exit(1);
+    } else {
+        printf("Sent packet.\n");
+    }
+
+    char reply[1];
+    if (recv(sock, reply, 1, 0) < 0) {
+        fprintf(stderr, "Recv failed.\n");
+    } else {
+        printf("Got reply: %c.\n", reply[0]);
+    }
+
+    close(sock);
+
     return 0;
 }
 
